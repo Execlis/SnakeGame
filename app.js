@@ -4,23 +4,23 @@ let width = canvas.width;
 let height = canvas.height;
 
 //
-
-context.strokeStyle = "black";
-context.lineWidth = 0.2;
-const q = 10;
-for (let i = 0; i < height / q + 1; i++) {
-  context.beginPath();
-  context.moveTo(i * q, 0);
-  context.lineTo(i * q, height);
-  context.stroke();
+let drawgrid = function () {
+  context.strokeStyle = "black";
+  context.lineWidth = 0.2;
+  const q = 10;
+  for (let i = 0; i < height / q + 1; i++) {
+    context.beginPath();
+    context.moveTo(i * q, 0);
+    context.lineTo(i * q, height);
+    context.stroke();
+  }
+  for (let i = 0; i < width / q + 1; i++) {
+    context.beginPath();
+    context.moveTo(0, i * q);
+    context.lineTo(width, i * q);
+    context.stroke();
+  }
 }
-for (let i = 0; i < width / q + 1; i++) {
-  context.beginPath();
-  context.moveTo(0, i * q);
-  context.lineTo(width, i * q);
-  context.stroke();
-}
-
 // functions menu
 
 let blockSize = 10;
@@ -30,7 +30,7 @@ let heightInBlocks = height / blockSize;
 let score = 0;
 
 let drawBorder = function () {
-  context.fillStyle = "gray";
+  context.fillStyle = "Gray";
   context.fillRect(0, 0, width, blockSize);
   context.fillRect(0, height - blockSize, width, blockSize);
   context.fillRect(0, 0, blockSize, height);
@@ -38,11 +38,11 @@ let drawBorder = function () {
 };
 
 let drawScore = function () {
-  context.textBaseline = "middle";
+  context.font = "20px Courier";
+  context.textBaseline = "top";
   context.fillStyle = "Black";
   context.textAlign = "left";
-  context.font = "20px Arial";
-  context.fillText(`Счет:  ${score}`, blockSize, blockSize);
+  context.fillText("Счет: "  + score, blockSize, blockSize);
 };
 
 let gameOver = function () {
@@ -51,7 +51,7 @@ let gameOver = function () {
   context.fillStyle = "Black";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(`Конец игры`, width / 2, height / 2);
+  context.fillText("Конец игры", width / 2, height / 2);
 };
 
 let circle = function (x, y, radius, fillCircle) {
@@ -86,13 +86,17 @@ Block.prototype.drawCircle = function (color) {
 };
 
 Block.prototype.equal = function (otherBlock) {
-  return this.col === otherBlock.col && this.row === otherBlock.Block.row;
+  return this.col === otherBlock.col && this.row === otherBlock.row;
 };
 
 // creation of snake
 
 let Snake = function () {
-  this.segments = [new Block(7, 5), new Block(6, 5), new Block(5, 5)];
+  this.segments = [
+    new Block(7, 5),
+    new Block(6, 5),
+    new Block(5, 5)
+  ];
   this.direction = "right";
   this.nextDirection = "right";
 };
@@ -137,11 +141,11 @@ Snake.prototype.move = function () {
 Snake.prototype.checkCollision = function (head) {
   let leftCollision = (head.col === 0);
   let topCollision = (head.row === 0);
-  let rightCollision = (head.col === widthBlock - 1);
-  let bottomCollision = (head.col === heightBlock - 1);
+  let rightCollision = (head.col === widthInBlocks - 1);
+  let bottomCollision = (head.col === heightInBlocks - 1);
 
-  let wallCollision = leftCollision || topCollision ||
-    rightCollision || bottomCollision;
+  let wallCollision =
+    leftCollision || topCollision || rightCollision || bottomCollision;
 
   let selfCollision = false;
 
@@ -152,4 +156,63 @@ Snake.prototype.checkCollision = function (head) {
   }
 
   return wallCollision || selfCollision;
-}
+};
+
+Snake.prototype.setDirection = function (newDirection) {
+  if (this.direction === "up" && newDirection === "down") {
+    return;
+  } else if (this.direction === "right" && newDirection === "left") {
+    return;
+  } else if (this.direction === "down" && newDirection === "up") {
+    return;
+  } else if (this.direction === "left" && newDirection === "right") {
+    return;
+  }
+  this.nextDirection = newDirection;
+};
+
+
+//apple
+
+let Apple = function () {
+  this.position = new Block(10, 10);
+};
+
+Apple.prototype.draw = function () {
+  this.position.drawCircle("LimeGreen");
+};
+
+Apple.prototype.move = function () {
+  let randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+  let randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+  this.position = new Block(randomCol, randomRow);
+};
+
+let snake = new Snake();
+let apple = new Apple();
+
+let intervalId = setInterval(function () {
+  context.clearRect(0, 0, width, height);
+  drawgrid();
+  drawScore();
+  snake.move();
+  snake.draw();
+  apple.draw();
+  drawBorder();
+}, 100);
+// keyboard
+
+let directions = {
+  37: "left",
+  38: "up",
+  39: "right",
+  40: "down",
+};
+
+$("body").keydown(function (event) {
+  let newDirection = directions[event.keyCode];
+  if (newDirection !== undefined) {
+    snake.setDirection(newDirection);
+  }
+});
+
